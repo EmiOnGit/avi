@@ -1,13 +1,17 @@
 use byteorder::{BigEndian, ByteOrder, LittleEndian};
 use frame::Frame;
+use std::convert::TryInto;
 use std::io::prelude::*;
 use std::io::Cursor;
 use std::io::Read;
 use std::io::Result as IoResult;
 use std::io::SeekFrom;
 
+use crate::header::{Header, HEADER_SIZE};
+
 /// The `Frames` type.
 pub struct Frames {
+    pub header: Header,
     /// The byte stream, represented by a `Vec` of `u8`.
     pub stream: Vec<u8>,
     /// A private field to keep track of the position of a particular header
@@ -30,14 +34,22 @@ impl Frames {
         let mut rdr = Cursor::new(&file);
 
         let mut pos_of_movi: usize = 0;
-
         rdr.seek(SeekFrom::Start(12))?;
         let mut buf = [0u8; 4];
         rdr.read_exact(&mut buf)?;
+        let mut header = None;
         while buf == *b"LIST" || buf == *b"JUNK" {
             rdr.read_exact(&mut buf)?;
             let s = LittleEndian::read_u32(&buf);
             rdr.read_exact(&mut buf)?;
+            if buf == *b"hdrl" {
+                let header_start = rdr.position() as usize;
+                let header_bytes = &file[header_start..header_start + HEADER_SIZE];
+
+                header = Some(Header {
+                    value: header_bytes.try_into().unwrap(),
+                });
+            }
             if buf == *b"movi" {
                 pos_of_movi = rdr.position() as usize - 4;
             }
@@ -55,6 +67,7 @@ impl Frames {
         }
 
         Ok(Self {
+            header: header.unwrap(),
             stream: file.clone(),
             pos_of_movi,
             meta,

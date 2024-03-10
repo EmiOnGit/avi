@@ -17,4 +17,7 @@ fn main() {
     for frame in &avi.frames.meta {
         println!("{frame:?}");
     }
+    let header = &avi.frames.header;
+    println!("header {}", header.height());
+    println!("width {}", header.width());
 }
