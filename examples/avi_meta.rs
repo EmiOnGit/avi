@@ -3,7 +3,7 @@
 //! Usage: `cargo run --example avi_meta AVIFILE`
 
 extern crate avirus;
-use avirus::AVI;
+use avirus::header::Header;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -12,12 +12,8 @@ fn main() {
         std::process::exit(1);
     }
 
-    let avi = AVI::new(&args[1]).expect("Unable to read AVI file. Error");
-
-    for frame in &avi.frames.meta {
-        println!("{frame:?}");
-    }
-    let header = &avi.frames.header;
+    let path = &args[1];
+    let header = Header::new(&path).unwrap();
     println!("header {}", header.height());
     println!("width {}", header.width());
 }

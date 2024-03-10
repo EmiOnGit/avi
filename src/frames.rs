@@ -44,7 +44,7 @@ impl Frames {
             rdr.read_exact(&mut buf)?;
             if buf == *b"hdrl" {
                 let header_start = rdr.position() as usize;
-                let header_bytes = &file[header_start..header_start + HEADER_SIZE];
+                let header_bytes = &file[header_start - 4..header_start + HEADER_SIZE - 4];
 
                 header = Some(Header {
                     value: header_bytes.try_into().unwrap(),
